@@ -85,7 +85,7 @@ num_runs = 10000  # Adjust the number of runs if needed
 all_runs = generate_all_params_parallel(num_runs)
 
 # Save the results to a JSON file
-output_file = 'VARYING_PARAMETERS_PARALLEL.json'
+output_file = 'VARYING_PARAMETERS.json'
 with open(output_file, 'w') as f:
     json.dump({i: run for i, run in enumerate(all_runs)}, f, indent=4)
 
