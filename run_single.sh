@@ -5,8 +5,8 @@
 #SBATCH --mem=42GB                   # memory per simulation
 #SBATCH --time=12:00:00              # time limits: 12 hours
 #SBATCH --account=CNHPC_1497299    # account name (CNHPC_1497299_0 or CNHPC_1497299 for dcgp and booster respectively)
-#SBATCH --error=/leonardo_scratch/large/userexternal/ntriant1/database/final/logs/Job_%A_%a.err            # standard error file 
-#SBATCH --output=/leonardo_scratch/large/userexternal/ntriant1/database/final/logs/Job_%A_%a.out           # standard output file``
+#SBATCH --error=/leonardo_scratch/large/userexternal/ntriant1/database/final/logs_slurm/Job_%A_%a.err            # standard error file 
+#SBATCH --output=/leonardo_scratch/large/userexternal/ntriant1/database/final/logs_slurm/Job_%A_%a.out           # standard output file``
 #SBATCH --partition=boost_usr_prod    # partition name (<dcgp or boost>_usr_prod)
 #SBATCH --qos=normal                 # quality of service
 
@@ -30,14 +30,20 @@ COUNTER=$(cat $COUNTER_PATH)
 
 
 # ARGS=(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)
-ARGS=({0..20})
+ARGS=({1..20})
 export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK 
 
 
-srun /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/venv3/bin/python /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/CREATE_DATABASE/run_single.py \
+
+LOG_DIR="/leonardo_scratch/large/userexternal/ntriant1/database/final/logs"
+
+
+srun --output="${LOG_DIR}/out_id_${ARGS[$SLURM_ARRAY_TASK_ID-1]}.out" --error="${LOG_DIR}/err_id_${ARGS[$SLURM_ARRAY_TASK_ID-1]}.err" /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/venv3/bin/python /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/CREATE_DATABASE/run_single.py \
 --counter ${ARGS[$SLURM_ARRAY_TASK_ID-1]} \
 --threads $SLURM_CPUS_PER_TASK &
 
 
 wait
+
+

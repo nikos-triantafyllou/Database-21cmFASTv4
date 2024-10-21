@@ -29,13 +29,14 @@ COUNTER_PATH="/leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_ven
 COUNTER=$(cat $COUNTER_PATH)
 
 
+
 # ARGS=(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)
 ARGS=({0..20})
 export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK 
 
 
-srun /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/venv3/bin/python /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/CREATE_DATABASE/LHS.py \
+srun /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/venv3/bin/python /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/CREATE_DATABASE/LHS_sampler.py \
 --counter ${ARGS[$SLURM_ARRAY_TASK_ID-1]} \
 --threads $SLURM_CPUS_PER_TASK &
 

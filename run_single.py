@@ -1,6 +1,6 @@
 
 
-TEST_WITH_SMALL_RUN = True # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
+TEST_WITH_SMALL_RUN = False # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
 
 import json
 import argparse
@@ -80,7 +80,7 @@ user_params['N_THREADS']=threads
 # with open('parameter_dicts.txt', 'r') as file:
 #     parameter_dict = json.load(file)
 
-file_path = "./VARYING_PARAMETERS.json"
+file_path = "./LHS_SAMPLES.json"
 with open(file_path, "r") as json_file:
     parameter_dict = json.load(json_file)
 
