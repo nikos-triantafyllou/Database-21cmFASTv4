@@ -35,7 +35,7 @@ export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK 
 
 
-srun /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/venv3/bin/python /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/CREATE_DATABASE/sampler.py \
+srun /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/venv3/bin/python /leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/CREATE_DATABASE/LHS.py \
 --counter ${ARGS[$SLURM_ARRAY_TASK_ID-1]} \
 --threads $SLURM_CPUS_PER_TASK &
 

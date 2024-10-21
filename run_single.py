@@ -1,6 +1,6 @@
 
 
-TEST_WITH_SMALL_RUN = True # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34
+TEST_WITH_SMALL_RUN = True # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
 
 import json
 import argparse
@@ -76,9 +76,14 @@ cosmo_params = {
 
 user_params['N_THREADS']=threads
 
-# Varying parameters:
-with open('parameter_dicts.txt', 'r') as file:
-    parameter_dict = json.load(file)
+# Varying parameters: 
+# with open('parameter_dicts.txt', 'r') as file:
+#     parameter_dict = json.load(file)
+
+file_path = "./VARYING_PARAMETERS.json"
+with open(file_path, "r") as json_file:
+    parameter_dict = json.load(json_file)
+
 parameter_dict_keys = list(parameter_dict.keys())
 varying_params = parameter_dict[parameter_dict_keys[counter]]
 
@@ -101,7 +106,7 @@ redshift = 5
 if TEST_WITH_SMALL_RUN: 
     user_params["BOX_LEN"]=60.0
     user_params["HII_DIM"]=60
-    redhsift=34
+    redshift=34
 
 print(user_params)
 
@@ -117,7 +122,8 @@ lightcone = p21c.run_lightcone(
                           'Ts_box',
                           'xH_box',
                           "density",
-                          "Tk_box", # TEMP KINETIC ALL GAS HERE AS WELL?
+                        #   "Tk_box", # TEMP KINETIC ALL GAS HERE AS WELL?
+                          "temp_kinetic_all_gas",
                           "Gamma12_box", 
                           "x_e_box", 
                           "n_ion",
@@ -127,7 +133,7 @@ lightcone = p21c.run_lightcone(
     random_seed=random_seed,
     global_quantities=("brightness_temp", 
                        'xH_box', 
-                       'Tk_box', 
+                    #    'Tk_box', 
                        "temp_kinetic_all_gas"),
 #     write=False
 )
@@ -210,7 +216,7 @@ with h5py.File(filename, 'w') as hdf:
     data_Tb_z_global = group_coeval_data.create_dataset('Tb_z_global',  data = lightcone.global_quantities['brightness_temp'])
 
     # Tk
-    data_Tk_z_global = group_coeval_data.create_dataset('Tk_z_global',  data = lightcone.global_quantities['Tk_box'])
+    # data_Tk_z_global = group_coeval_data.create_dataset('Tk_z_global',  data = lightcone.global_quantities['Tk_box'])
     
     # Temp_kinetic_all_gas
     data_Tk_z_all_gas = group_coeval_data.create_dataset('Tk_z_all_gas',  data = lightcone.global_quantities['temp_kinetic_all_gas'])
@@ -239,7 +245,8 @@ with h5py.File(filename, 'w') as hdf:
     data_M_star_mini = group_lightcones.create_dataset('M_star_mini',          data = lightcone.halo_stars_mini)
     data_density = group_lightcones.create_dataset('Density',                  data = lightcone.density)
     data_X_HI = group_lightcones.create_dataset('X_HI',                        data = lightcone.xH_box)
-    data_T_kin = group_lightcones.create_dataset('T_kin',                      data = lightcone.Tk_box)
+    # data_T_kin = group_lightcones.create_dataset('T_kin',                      data = lightcone.Tk_box)
+    data_T_kin_all_gas = group_lightcones.create_dataset('T_kin_all_gas',      data = lightcone.temp_kinetic_all_gas)
     data_T_spin = group_lightcones.create_dataset('T_spin',                    data = lightcone.Ts_box)
     data_Gamma = group_lightcones.create_dataset('Gamma',                      data = lightcone.Gamma12_box)
     data_ion_emissivity = group_lightcones.create_dataset('Ion_Emissivity',    data = lightcone.n_ion)
@@ -248,6 +255,9 @@ with h5py.File(filename, 'w') as hdf:
     #     # Create a dataset and save data1
     #     hdf.create_dataset('dataset1', data=data1)
     #     group.create_dataset('dataset1', data=data1)
+
+    group_halo_data = hdf.create_group('halo_data')
+
 
 print(f"First data has been saved to {filename}", flush=True)
 
@@ -260,7 +270,6 @@ print(f"First data has been saved to {filename}", flush=True)
 
 
 '''====================================== SAVE RESULTS 2 (add HMF from cache)=========================================='''
-
 
 
 
@@ -286,10 +295,16 @@ mass_mean = 10**(0.5*(np.log10(bins_mass[1:])+np.log10(bins_mass[:-1])))
 dM        = bins_mass[1:] - bins_mass[:-1]
 
 HMF_dict={}
+coupled_names_dict={}
 for cache_file in found_files:  
     with h5py.File(f'{cache_path}{cache_file}', 'r') as hdf:
         hmass_arr = hdf['PerturbHaloField']['halo_masses'][:]
         HMF_dict[dict(hdf.attrs)['redshift']] = mass_mean * np.histogram(hmass_arr, bins=bins_mass)[0]/(dM*BoxSize**3)
+
+        # Added line to couple redshifts and names of files 
+        coupled_names_dict[dict(hdf.attrs)['redshift']] = f'{cache_file}'
+
+print('coupled dictionary:',coupled_names_dict, flush=True)     
 
 HMF_arr = np.zeros((len(node_redshifts), len(mass_mean)))
 ii = 0
@@ -322,3 +337,74 @@ explore_hdf5(filename)
 
 
 '''====================================== SAVE RESULTS 3 (add PS from cache???)=========================================='''
+
+
+
+
+
+'''====================================== Adding halos =========================================='''
+
+print('Now adding halos...', flush=True)
+
+
+# Add section to the hdf5 file
+# halo data---------------------------------------------------------------------------------
+
+
+
+# with h5py.File(filename, 'r') as hdf:
+#     node_redshifts = hdf['coeval_data'].attrs['node_redshifts']
+#     # box_len = hdf['simulation_parameters']['user_params'].attrs["BOX_LEN"]
+    
+
+# Calculate the HMF from the mass array in the PerturbHaloField file
+# pattern = 'PerturbHaloField*' 
+# found_files = search_files(cache_path, pattern)
+
+filenames_in_order = []
+for name_of_node_z in node_redshifts:
+    filenames_in_order.append(coupled_names_dict[name_of_node_z])
+
+
+with h5py.File(filename, 'a') as hdf_out:
+    node_redshifts = hdf_out['coeval_data'].attrs['node_redshifts']
+    group_halo_data = hdf_out['halo_data']
+
+    prog_i=0
+    for cache_file in filenames_in_order:  # so different redshifts
+        print(prog_i, flush=True)
+        # Read the specific cache perturb file of a certain redshift
+        with h5py.File(f'{cache_path}{cache_file}', 'r') as hdf_in:
+            print('read the file',flush=True)
+            hmass_arr = hdf_in['PerturbHaloField']['halo_masses'][:]
+            print('shape=',hmass_arr.shape,flush=True)
+            redshift = dict(hdf_in.attrs)['redshift']
+
+            print('selecting...',flush=True)
+            sel = hmass_arr < 10**(9.5)
+            # indices95 = np.where(hmass_arr > 10**(9.5) )[0]
+            print('writing in ram...',flush=True)
+            halo_masses = hdf_in['PerturbHaloField']['halo_masses'][:][sel]
+            halo_coords = hdf_in['PerturbHaloField']['halo_coords'][:][sel,:]
+            sfr_rng     = hdf_in['PerturbHaloField']['sfr_rng'][:][sel]
+            star_rng    = hdf_in['PerturbHaloField']['star_rng'][:][sel]
+        
+        print('writing...',flush=True)
+        # Open an HDF5 file again and write the halo data
+        group_halo_data_redshift = group_halo_data.create_group(f'{redshift}')
+        data_halo_masses = group_halo_data_redshift.create_dataset('halo_masses',  data = halo_masses)
+        data_halo_coords = group_halo_data_redshift.create_dataset('halo_coords',  data = halo_coords)
+        data_sfr_rng     = group_halo_data_redshift.create_dataset('sfr_rng',      data = sfr_rng)
+        data_star_rng    = group_halo_data_redshift.create_dataset('star_rng',     data = star_rng)
+
+        prog_i+=1
+
+
+explore_hdf5(filename)
+
+
+
+
+
+
+    

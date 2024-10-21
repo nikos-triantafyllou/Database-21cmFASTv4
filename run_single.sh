@@ -1,16 +1,16 @@
 #!/bin/bash -l
 #SBATCH --nodes=1                    # nodes
 #SBATCH --ntasks-per-node=1          # tasks/processes/cores per node max 112 for DCGP and 32 for Booster
-#SBATCH --cpus-per-task=9            # threads/cpus per task
+#SBATCH --cpus-per-task=4            # threads/cpus per task
 #SBATCH --mem=42GB                   # memory per simulation
 #SBATCH --time=12:00:00              # time limits: 12 hours
-#SBATCH --account=CNHPC_1497299_0    # account name (CNHPC_1497299_0 or CNHPC_1497299 for dcgp and booster respectively)
+#SBATCH --account=CNHPC_1497299    # account name (CNHPC_1497299_0 or CNHPC_1497299 for dcgp and booster respectively)
 #SBATCH --error=/leonardo_scratch/large/userexternal/ntriant1/database/final/logs/Job_%A_%a.err            # standard error file 
 #SBATCH --output=/leonardo_scratch/large/userexternal/ntriant1/database/final/logs/Job_%A_%a.out           # standard output file``
-#SBATCH --partition=dcgp_usr_prod    # partition name (<dcgp or boost>_usr_prod)
+#SBATCH --partition=boost_usr_prod    # partition name (<dcgp or boost>_usr_prod)
 #SBATCH --qos=normal                 # quality of service
 
-#SBATCH --array=1-1                 # number of simulations 
+#SBATCH --array=1-8                 # number of simulations 
 
 source ~/.bashrc
 module load python/3.10
