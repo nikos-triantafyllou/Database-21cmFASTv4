@@ -7,4 +7,4 @@ This is the repository for the database created by 21cmFASTv4
 
 
 
-.. image:: Database_tree.pdf
+.. target:: Database_tree.pdf
