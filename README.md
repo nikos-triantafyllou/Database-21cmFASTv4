@@ -2,4 +2,3 @@
 
 This is the repository for the database created by 21cmFASTv4
 
-[Download PDF](Database tree.pdf)
