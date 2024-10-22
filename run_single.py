@@ -76,6 +76,8 @@ cosmo_params = {
 
 user_params['N_THREADS']=threads
 
+astro_params['F_ESC7_MINI']= astro_params['F_ESC10']-1 # ----------------------------------database---------------------------------------
+
 # Varying parameters: 
 # with open('parameter_dicts.txt', 'r') as file:
 #     parameter_dict = json.load(file)
