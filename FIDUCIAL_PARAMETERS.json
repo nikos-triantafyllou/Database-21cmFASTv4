@@ -61,7 +61,7 @@
         "ALPHA_STAR": 0.5,
         "ALPHA_STAR_MINI": null,
         "F_ESC10": -1.0,
-        "F_ESC7_MINI": null,
+        "F_ESC7_MINI": "Default is null (same as F_ESC), but manually add a constant difference",
         "ALPHA_ESC": -0.5,
         "M_TURN": 5,
         "R_BUBBLE_MAX": null,
