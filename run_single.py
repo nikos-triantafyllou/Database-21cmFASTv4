@@ -1,6 +1,6 @@
 
 
-TEST_WITH_SMALL_RUN = False # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
+TEST_WITH_SMALL_RUN = True # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
 
 import json
 import argparse
@@ -87,7 +87,7 @@ with open(file_path, "r") as json_file:
     parameter_dict = json.load(json_file)
 
 parameter_dict_keys = list(parameter_dict.keys())
-varying_params = parameter_dict[parameter_dict_keys[counter]]
+varying_params = parameter_dict[parameter_dict_keys[counter-1]]
 
 random_seed = varying_params['random_seed']
 cosmo_params['SIGMA_8'] = varying_params['SIGMA_8']
@@ -124,13 +124,14 @@ lightcone = p21c.run_lightcone(
                           'Ts_box',
                           'xH_box',
                           "density",
-                        #   "Tk_box", # TEMP KINETIC ALL GAS HERE AS WELL?
+                          "Tk_box", 
                           "temp_kinetic_all_gas",
                           "Gamma12_box", 
                           "x_e_box", 
                           "n_ion",
                           'halo_mass','halo_sfr','halo_stars',
-                         'halo_sfr_mini','halo_stars_mini'
+                         'halo_sfr_mini','halo_stars_mini',
+                         'velocity_z'
                          ),
     random_seed=random_seed,
     global_quantities=("brightness_temp", 
@@ -175,57 +176,61 @@ with h5py.File(filename, 'w') as hdf:
     # coeval_data---------------------------------------------------------------------------------
     group_coeval_data = hdf.create_group('coeval_data')
     group_coeval_data.attrs['node_redshifts'] = lightcone.node_redshifts    
-    group_coeval_data.attrs['log10_mturnovers'] = lightcone.log10_mturnovers
-    group_coeval_data.attrs['log10_mturnovers_mini'] = lightcone.log10_mturnovers_mini
+    # group_coeval_data.attrs['log10_mturnovers'] = lightcone.log10_mturnovers
+    # group_coeval_data.attrs['log10_mturnovers_mini'] = lightcone.log10_mturnovers_mini
     
     #UV_LF
-    z_uv=lightcone.node_redshifts  
-    LF_arr=p21c.compute_luminosity_function(
-        redshifts = z_uv,
-        user_params=user_params,
-        cosmo_params=cosmo_params,
-        astro_params=astro_params,
-        flag_options=flag_options,
-        nbins=100,
-        mturnovers=10**lightcone.log10_mturnovers,
-        mturnovers_mini=10**lightcone.log10_mturnovers_mini,
-        component=0,
-    )    
+    # z_uv=lightcone.node_redshifts  
+    # LF_arr=p21c.compute_luminosity_function(
+    #     redshifts = z_uv,
+    #     user_params=user_params,
+    #     cosmo_params=cosmo_params,
+    #     astro_params=astro_params,
+    #     flag_options=flag_options,
+    #     nbins=100,
+    #     mturnovers=10**lightcone.log10_mturnovers,
+    #     mturnovers_mini=10**lightcone.log10_mturnovers_mini,
+    #     component=0,
+    # )    
     # data_UV_LF = group_coeval_data.create_dataset('UV_LF',              data= LF_arr)
     # data_UV_LF.attrs['z_uv'] =  z_uv
     
-    data_UV_LF_0 = group_coeval_data.create_dataset('LF_Muvfunc',              data= LF_arr[0])
-    data_UV_LF_0.attrs['info'] =  'Magnitude array (i.e. brightness). Shape [node_redshifts, nbins]'
+    # data_UV_LF_0 = group_coeval_data.create_dataset('LF_Muvfunc',              data= LF_arr[0])
+    # data_UV_LF_0.attrs['info'] =  'Magnitude array (i.e. brightness). Shape [node_redshifts, nbins]'
     
-    data_UV_LF_1 = group_coeval_data.create_dataset('LF_Mhfunc',              data= LF_arr[1])
-    data_UV_LF_1.attrs['info'] =  'Halo mass array. Shape [node_redshifts, nbins]'
+    # data_UV_LF_1 = group_coeval_data.create_dataset('LF_Mhfunc',              data= LF_arr[1])
+    # data_UV_LF_1.attrs['info'] =  'Halo mass array. Shape [node_redshifts, nbins]'
     
-    data_UV_LF_2 = group_coeval_data.create_dataset('LF_lfunc',              data= LF_arr[2])
-    data_UV_LF_2.attrs['info'] =  "Number density of haloes corresponding to each bin defined by `LF_Muvfunc` Shape [node_redshifts, nbins]"
+    # data_UV_LF_2 = group_coeval_data.create_dataset('LF_lfunc',              data= LF_arr[2])
+    # data_UV_LF_2.attrs['info'] =  "Number density of haloes corresponding to each bin defined by `LF_Muvfunc` Shape [node_redshifts, nbins]"
     
     # EOR History
-    data_EoR_history = group_coeval_data.create_dataset('EoR_history',  data = lightcone.global_quantities['xH_box'])
+    data_x_HI = group_coeval_data.create_dataset('x_HI',  data = lightcone.global_quantities['xH_box'])
     
     
     # Tau_e
     tau_e = p21c.compute_tau(redshifts = lightcone.node_redshifts[::-1],  # reverse redshifts so that they are in ascending order 
-                             global_xHI = lightcone.global_quantities['xH_box'][::-1], # reverse xHI  so that they are in scending order like the redshifts
+                             global_xHI = lightcone.global_quantities['xH_box'][::-1], # reverse xHI  so that they are in ascending order like the redshifts
                              user_params=user_params, 
                              cosmo_params=cosmo_params)
     data_tau_e = group_coeval_data.create_dataset('tau_e',              data = tau_e)
     
     # Tb
-    data_Tb_z_global = group_coeval_data.create_dataset('Tb_z_global',  data = lightcone.global_quantities['brightness_temp'])
+    data_brightness_temp = group_coeval_data.create_dataset('brightness_temp',  data = lightcone.global_quantities['brightness_temp'])
 
     # Tk
     # data_Tk_z_global = group_coeval_data.create_dataset('Tk_z_global',  data = lightcone.global_quantities['Tk_box'])
     
     # Temp_kinetic_all_gas
-    data_Tk_z_all_gas = group_coeval_data.create_dataset('Tk_z_all_gas',  data = lightcone.global_quantities['temp_kinetic_all_gas'])
+    data_T_kin_all_gas = group_coeval_data.create_dataset('T_kin_all_gas',  data = lightcone.global_quantities['temp_kinetic_all_gas'])
+
+    log10_mturnovers = group_coeval_data.create_dataset('log10_mturnovers',  data = lightcone.log10_mturnovers)
+
+    log10_mturnovers_mini = group_coeval_data.create_dataset('log10_mturnovers_mini',  data = lightcone.log10_mturnovers_mini)
 
 
     # 21cm PS
-    data_21cm_PS = group_coeval_data.create_dataset('21cm_PS',          dtype=np.float64)
+    # data_21cm_PS = group_coeval_data.create_dataset('21cm_PS',          dtype=np.float64)
     
     # HMF vs z: for this I will reopen the file only when I calculate the relations so that I dont loose RAM 
     data_HMF_z = group_coeval_data.create_dataset('HMF_z',              dtype=np.float64)
@@ -245,14 +250,16 @@ with h5py.File(filename, 'w') as hdf:
     data_M_star = group_lightcones.create_dataset('M_star',                    data = lightcone.halo_stars)
     # mini
     data_M_star_mini = group_lightcones.create_dataset('M_star_mini',          data = lightcone.halo_stars_mini)
-    data_density = group_lightcones.create_dataset('Density',                  data = lightcone.density)
-    data_X_HI = group_lightcones.create_dataset('X_HI',                        data = lightcone.xH_box)
-    # data_T_kin = group_lightcones.create_dataset('T_kin',                      data = lightcone.Tk_box)
+    data_density = group_lightcones.create_dataset('density',                  data = lightcone.density)
+    data_X_HI = group_lightcones.create_dataset('x_HI',                        data = lightcone.xH_box)
+    data_T_kin = group_lightcones.create_dataset('T_kin',                      data = lightcone.Tk_box)
     data_T_kin_all_gas = group_lightcones.create_dataset('T_kin_all_gas',      data = lightcone.temp_kinetic_all_gas)
     data_T_spin = group_lightcones.create_dataset('T_spin',                    data = lightcone.Ts_box)
     data_Gamma = group_lightcones.create_dataset('Gamma',                      data = lightcone.Gamma12_box)
-    data_ion_emissivity = group_lightcones.create_dataset('Ion_Emissivity',    data = lightcone.n_ion)
-    data_Xray_emissivity = group_lightcones.create_dataset('Xray_emissivity',  data = lightcone.x_e_box)
+    data_ion_emissivity = group_lightcones.create_dataset('ion_emissivity',    data = lightcone.n_ion)
+    data_Xray_emissivity = group_lightcones.create_dataset('xray_emissivity',  data = lightcone.x_e_box)
+    data_velocity_z = group_lightcones.create_dataset('velocity_z',  data = lightcone.velocity_z)
+
     
     #     # Create a dataset and save data1
     #     hdf.create_dataset('dataset1', data=data1)

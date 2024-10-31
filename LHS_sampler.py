@@ -29,8 +29,8 @@ import corner
 
 
 from scipy.stats import qmc
-sampler = qmc.LatinHypercube(d=11)
-sample = sampler.random(n=1000, random_seed=22)
+sampler = qmc.LatinHypercube(d=11, seed=23)
+sample = sampler.random(n=2000)
 
 l_bounds = [0.8092,   #SIGMA_8
             38,       #L_X
