@@ -1,6 +1,6 @@
 
 
-TEST_WITH_SMALL_RUN = True # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
+TEST_WITH_SMALL_RUN = False # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
 
 import json
 import argparse
@@ -390,7 +390,7 @@ with h5py.File(filename, 'a') as hdf_out:
             redshift = dict(hdf_in.attrs)['redshift']
 
             print('selecting...',flush=True)
-            sel = hmass_arr < 10**(9.5)
+            sel = hmass_arr > 10**(9.5)
             # indices95 = np.where(hmass_arr > 10**(9.5) )[0]
             print('writing in ram...',flush=True)
             halo_masses = hdf_in['PerturbHaloField']['halo_masses'][:][sel]
