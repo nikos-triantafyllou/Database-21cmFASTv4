@@ -1,5 +1,3 @@
-
-
 TEST_WITH_SMALL_RUN = False # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
 
 import json
@@ -21,6 +19,8 @@ version_info = sys.version_info
 python_version=f'{version_info.major}.{version_info.minor}.{version_info.micro}'
 
 from d_utils import create_group_with_attributes, search_files, explore_hdf5
+
+from astropy import units as un
 
 '''========================================= Determine directories =================================='''
 
@@ -76,11 +76,16 @@ cosmo_params = {
 
 user_params['N_THREADS']=threads
 
-astro_params['F_ESC7_MINI']= astro_params['F_ESC10']-1 # ----------------------------------database---------------------------------------
+astro_params['F_ESC7_MINI'] = astro_params['F_ESC10']-1 # ----------------------------------database---------------------------------------
+astro_params['F_STAR7_MINI'] = astro_params['F_STAR10']
+astro_params['ALPHA_STAR_MINI'] = astro_params['ALPHA_STAR']
 
 # Varying parameters: 
 # with open('parameter_dicts.txt', 'r') as file:
 #     parameter_dict = json.load(file)
+
+
+
 
 file_path = "./LHS_SAMPLES.json"
 with open(file_path, "r") as json_file:
@@ -89,14 +94,45 @@ with open(file_path, "r") as json_file:
 parameter_dict_keys = list(parameter_dict.keys())
 varying_params = parameter_dict[parameter_dict_keys[counter-1]]
 
+
+
+#----------------------------------------------------------
+# varying_params["random_seed"] = 64
+# varying_params["SIGMA_8"] = 0.812265330895063
+# varying_params["L_X"] = 38.16355213209913
+# varying_params["L_X_MINI"] = 38.16355213209913
+# varying_params["NU_X_THRESH"] = 1261.3551045091579
+# varying_params["F_STAR10"] = -1.1881095863281321
+# varying_params["ALPHA_STAR"] = 0.7477293800455698
+# varying_params["F_ESC10"] = -1.3
+# varying_params["ALPHA_ESC"] = -0.3
+# varying_params["t_STAR"] = 0.3727222000115773
+# varying_params["SIGMA_SFR_LIM"] = 0.6948020917045928
+# varying_params["M_TURN"] = 6.0
+#------------------------------------------------------------
+
+
+
+
 random_seed = varying_params['random_seed']
 cosmo_params['SIGMA_8'] = varying_params['SIGMA_8']
 
 for astro_key in list(varying_params.keys())[2:]:
     astro_params[astro_key] = varying_params[astro_key]
 
+
+
+astro_params['F_ESC7_MINI'] = astro_params['F_ESC10']-1 # ----------------------------------database---------------------------------------
+astro_params['F_STAR7_MINI'] = astro_params['F_STAR10']
+astro_params['ALPHA_STAR_MINI'] = astro_params['ALPHA_STAR']
+
+
+
 print(f'Running with values: {varying_params}', flush=True)
 print(cosmo_params)
+
+
+
 
 
 '''======================================== RUN 21cmFAST =========================================='''
@@ -112,15 +148,43 @@ if TEST_WITH_SMALL_RUN:
 
 print(user_params)
 
-# Create the lightcone
-lightcone = p21c.run_lightcone(
-    redshift = redshift,
-#     max_redshift = 6.0,
-    user_params = user_params,
-    cosmo_params = cosmo_params,
-    astro_params= astro_params,
-    flag_options= flag_options,
-    lightcone_quantities=("brightness_temp", 
+
+# New way to run 21cmFAST--------------------------------------------------------------------------------------------------------------------------------------
+
+print("These are the new user params defaults:", p21c.UserParams.new(dict()))
+print("These are the new flag options defaults:", p21c.FlagOptions.new(dict()))
+cosmo_params_struct = p21c.CosmoParams.new(cosmo_params)
+flag_options_struct = p21c.FlagOptions.new(flag_options)
+
+# print("These are the new astro params defaults:", p21c.AstroParams(flag_options=flag_options_struct))
+astro_params_struct = p21c.AstroParams.new(astro_params)
+
+#To use the new input structs we can either:
+#1. pass in nothing to use all defaults
+# cosmo_params = p21c.CosmoParams()
+# #2. pass in keywords directly to a class
+# flag_options = p21c.FlagOptions(USE_HALO_FIELD=True,HALO_STOCHASTICITY=True,USE_MASS_DEPENDENT_ZETA=True,INHOMO_RECO=True,USE_TS_FLUCT=True)
+# #3. pass in a dictionary, keywords, an existing InputStruct instance, or a combination of those into the InputStruct.new() method
+# user_params = p21c.UserParams.new(dict(USE_INTERPOLATION_TABLES=True,N_THREADS=2,BOX_LEN=100,DIM=200,
+#                             HII_DIM=50,HMF='ST',INTEGRATION_METHOD_ATOMIC='GSL-QAG',INTEGRATION_METHOD_MINI="GSL-QAG",SAMPLER_MIN_MASS=1e9))
+# #NOTE: To use some defaults properly, we need to pass in flag options to the AstroParams constructor
+# astro_params = p21c.AstroParams(flag_options=flag_options)
+
+
+
+
+
+
+user_params_struct = p21c.UserParams.new(user_params)
+# #NOTE: To use some defaults properly, we need to pass in flag options to the AstroParams constructor
+# astro_params = p21c.AstroParams(flag_options=flag_options)
+
+#set some global params if desired
+# p21c.global_params.MAXHALO_FACTOR = 2
+# p21c.global_params.DELTA_R_FACTOR = 1.03
+
+#Generate a LightConer instance, which defines the dimensions, angles and quantities desired
+lightcone_quantities=("brightness_temp", 
                           'Ts_box',
                           'xH_box',
                           "density",
@@ -132,14 +196,142 @@ lightcone = p21c.run_lightcone(
                           'halo_mass','halo_sfr','halo_stars',
                          'halo_sfr_mini','halo_stars_mini',
                          'velocity_z'
-                         ),
-    random_seed=random_seed,
-    global_quantities=("brightness_temp", 
+                         )
+
+global_quantities=("brightness_temp", 
                        'xH_box', 
                     #    'Tk_box', 
-                       "temp_kinetic_all_gas"),
-#     write=False
+                       "temp_kinetic_all_gas")
+
+#This instance is now required for run_lightcone
+# lcn = p21c.RectilinearLightconer.with_equal_cdist_slices(
+#         min_redshift=redshift,
+#         max_redshift=35.0,
+#         resolution=user_params['BOX_LEN'] / user_params['HII_DIM'] * un.Mpc,
+#         quantities=lightcone_quantities,
+# )
+
+# #set up the generator function for the lightcone run
+# lc_gen = p21c.run_lightcone(
+#         lightconer=lcn,
+#         flag_options = flag_options,
+#         astro_params = astro_params,
+#         user_params = user_params,
+#         cosmo_params = cosmo_params,
+#         global_quantities=lightcone_quantities,
+#         random_seed = random_seed,
+#         # regenerate = True,
+# )
+
+
+
+# #iterate through the generator
+# start = timer()
+# # #this can be done with any iteration control you want, for fine control over outputs and post-processing
+# for iteration in lc_gen:
+#         iz,z,coev,lightconec = iteration
+
+#As an alternative for convenience, we provide the exhaust_lightcone function to run through an entire lightcone all at once
+#This takes the same arguments as run_lightcone
+
+
+
+
+lcn = p21c.RectilinearLightconer.with_equal_cdist_slices(
+        min_redshift=redshift,
+        max_redshift=35.0,
+        resolution=user_params['BOX_LEN'] / user_params['HII_DIM'] * un.Mpc,
+        quantities=lightcone_quantities,
 )
+
+min_redshift=redshift
+max_redshift=35.0
+
+
+
+# node_redshifts = p21c.get_logspaced_redshifts(min_redshift  = 5,
+#                              max_redshift  = 35.0,
+#                              z_step_factor = user_params['ZPRIME_STEP_FACTOR'])
+# print('NODE_REDS=', node_redshifts)
+
+
+node_redshifts = p21c.get_logspaced_redshifts(min_redshift  = min_redshift,
+                             max_redshift  = max_redshift,
+                             z_step_factor = user_params['ZPRIME_STEP_FACTOR'])
+
+
+
+input_params_struct = p21c.InputParameters(
+                cosmo_params=cosmo_params_struct,
+                astro_params=astro_params_struct,
+                user_params=user_params_struct,
+                flag_options=flag_options_struct,
+                random_seed=random_seed,
+                node_redshifts = node_redshifts,
+            )
+
+
+
+iz, z, coev, lightcone = p21c.exhaust_lightcone(
+        lightconer=lcn,
+        inputs = input_params_struct,
+        regenerate = True,
+        global_quantities=global_quantities,
+)
+
+
+# iz, z, coev, lightcone = p21c.exhaust_lightcone(
+#         lightconer=lcn,
+#         flag_options = flag_options_struct,
+#         astro_params = astro_params_struct,
+#         user_params = user_params_struct,
+#         cosmo_params = cosmo_params_struct,
+#         global_quantities=global_quantities,
+#         random_seed = random_seed,
+#         regenerate = True,
+# )
+
+
+
+# end = timer()
+# print(f'done, time = {end-start:.2f} seconds')
+# # lc._write(direc='./',fname=f'lightcone_test.h5',clobber=True)
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+# This is the old way to run a lightcone-------------------------------------------------------------------------------------------
+# Create the lightcone
+# lightcone = p21c.run_lightcone(
+#     redshift = redshift,
+# #     max_redshift = 6.0,
+#     user_params = user_params,
+#     cosmo_params = cosmo_params,
+#     astro_params= astro_params,
+#     flag_options= flag_options,
+#     lightcone_quantities=("brightness_temp", 
+#                           'Ts_box',
+#                           'xH_box',
+#                           "density",
+#                           "Tk_box", 
+#                           "temp_kinetic_all_gas",
+#                           "Gamma12_box", 
+#                           "x_e_box", 
+#                           "n_ion",
+#                           'halo_mass','halo_sfr','halo_stars',
+#                          'halo_sfr_mini','halo_stars_mini',
+#                          'velocity_z'
+#                          ),
+#     random_seed=random_seed,
+#     global_quantities=("brightness_temp", 
+#                        'xH_box', 
+#                     #    'Tk_box', 
+#                        "temp_kinetic_all_gas"),
+# #     write=False
+# )
+
+#------------------------------------------------------------------------------------------------------------------------------------
+
 
 print('Simulation successful', flush=True)
 
@@ -169,7 +361,6 @@ with h5py.File(filename, 'w') as hdf:
     create_group_with_attributes(group_simulation_parameters, 'flag_options', flag_options)
     create_group_with_attributes(group_simulation_parameters, 'global_params', global_params)
     create_group_with_attributes(group_simulation_parameters, 'varying_params', varying_params)
-    
     
     
     
@@ -207,12 +398,22 @@ with h5py.File(filename, 'w') as hdf:
     # EOR History
     data_x_HI = group_coeval_data.create_dataset('x_HI',  data = lightcone.global_quantities['xH_box'])
     
+
+    print('z:, ',z)
+    print('node length: ', lightcone.node_redshifts)
+    print('xhbox len: ', lightcone.global_quantities['xH_box'])
+    # print('node length: ', len(lightcone.node_redshifts[::-1]), flush=True)
+    # print('xhbox len: ', len(lightcone.global_quantities['xH_box'][::-1]), flush=True)
     
     # Tau_e
+    # tau_e = p21c.compute_tau(redshifts = lightcone.node_redshifts[::-1],  # reverse redshifts so that they are in ascending order 
+    #                          global_xHI = lightcone.global_quantities['xH_box'][::-1], # reverse xHI  so that they are in ascending order like the redshifts
+    #                          user_params=user_params, 
+    #                          cosmo_params=cosmo_params)
+    # data_tau_e = group_coeval_data.create_dataset('tau_e',              data = tau_e)
     tau_e = p21c.compute_tau(redshifts = lightcone.node_redshifts[::-1],  # reverse redshifts so that they are in ascending order 
                              global_xHI = lightcone.global_quantities['xH_box'][::-1], # reverse xHI  so that they are in ascending order like the redshifts
-                             user_params=user_params, 
-                             cosmo_params=cosmo_params)
+                             inputs = input_params_struct)
     data_tau_e = group_coeval_data.create_dataset('tau_e',              data = tau_e)
     
     # Tb
@@ -269,8 +470,6 @@ with h5py.File(filename, 'w') as hdf:
 
 
 print(f"First data has been saved to {filename}", flush=True)
-
-
 
 
 
@@ -370,10 +569,18 @@ print('Now adding halos...', flush=True)
 # pattern = 'PerturbHaloField*' 
 # found_files = search_files(cache_path, pattern)
 
-filenames_in_order = []
-for name_of_node_z in node_redshifts:
-    filenames_in_order.append(coupled_names_dict[name_of_node_z])
+# Save only ceertain redshifts around 5.5, 6, 6.5, 7, 8, 9
+# The names of the dictionary are ints and can be found in the easy_access_info folder of this repository (because tthey are nor exactly 5.5,6.0 etc)
 
+filenames_in_order = []
+if TEST_WITH_SMALL_RUN==True:
+    for name_of_node_z in node_redshifts:
+    # for name_of_node_z in [34.69999933242798,34.0]:
+        filenames_in_order.append(coupled_names_dict[name_of_node_z])
+elif TEST_WITH_SMALL_RUN==False:
+    for name_of_node_z in [9.04050868612415, 8.09399806338753, 7.075210029944779, 6.460245850367914, 6.029956286013594, 5.49459296]:
+        print('found node_redshift', flush=True)
+        filenames_in_order.append(coupled_names_dict[name_of_node_z])
 
 with h5py.File(filename, 'a') as hdf_out:
     node_redshifts = hdf_out['coeval_data'].attrs['node_redshifts']
@@ -390,7 +597,7 @@ with h5py.File(filename, 'a') as hdf_out:
             redshift = dict(hdf_in.attrs)['redshift']
 
             print('selecting...',flush=True)
-            sel = hmass_arr > 10**(9.5)
+            sel = hmass_arr > 10**(10)
             # indices95 = np.where(hmass_arr > 10**(9.5) )[0]
             print('writing in ram...',flush=True)
             halo_masses = hdf_in['PerturbHaloField']['halo_masses'][:][sel]
@@ -411,7 +618,7 @@ with h5py.File(filename, 'a') as hdf_out:
 
 explore_hdf5(filename)
 
-
+print('FINISHED', flush=True)
 
 
 

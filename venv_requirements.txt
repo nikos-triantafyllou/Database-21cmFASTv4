@@ -1,4 +1,4 @@
-21cmFAST @ file:///leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/21cmFAST
+-e git+https://github.com/nikos-triantafyllou/21cmFAST.git@f8b15152e9786fa18ba4bfa7fb988ad73b1ebce0#egg=21cmFAST
 astropy==6.1.2
 astropy-iers-data==0.2024.8.19.0.32.16
 astropy_healpix==1.0.3
