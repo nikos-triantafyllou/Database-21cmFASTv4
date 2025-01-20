@@ -1,0 +1,3 @@
+WARNING:root:Too few points to create valid contours
+slurmstepd: error: Detected 1 oom-kill event(s) in StepId=10688339.0. Some of your processes may have been killed by the cgroup out-of-memory handler.
+srun: error: lrdn4220: task 0: Out Of Memory
