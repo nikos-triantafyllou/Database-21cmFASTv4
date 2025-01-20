@@ -122,8 +122,8 @@ def plot_ps_1D(ps,title='power vs k'):
     # plt.axvline(k_eq, color='black', linestyle='--', label=r'$\rm k_{eq}=$'+'{}'.format(round(k_eq,3)) + r'$\rm h Mpc^{-1}$')
 
     # Make the plot pretty
-    plt.xlabel(r'$\rm k$')
-    plt.ylabel(r'$\rm power$')
+    plt.xlabel(r'$\rm k\; [Mpc^{-1}]$')
+    plt.ylabel(r'$\rm \Delta^2_{21}\; [mK^2]$')
     # plt.title(label=title)
     plt.xscale('log')
     plt.yscale('log')
@@ -156,8 +156,8 @@ def plot_ps_1D_2(ps,title='power vs z'):
     # plt.axvline(k_eq, color='black', linestyle='--', label=r'$\rm k_{eq}=$'+'{}'.format(round(k_eq,3)) + r'$\rm h Mpc^{-1}$')
 
     # Make the plot pretty
-    plt.xlabel(r'$\rm z$')
-    plt.ylabel(r'$\rm power$')
+    plt.xlabel('Redshift, z')
+    plt.ylabel(r'$\rm \Delta^2_{21}\; [mK^2]$')
     # plt.title(label=title)
     # plt.xscale('log')
     plt.yscale('log')
@@ -168,7 +168,7 @@ def plot_ps_1D_2(ps,title='power vs z'):
     # Add a colorbar for the different redshift plots
     norm = Normalize(vmin=redshifts[-1], vmax=redshifts[0])
     sm = ScalarMappable(norm=norm, cmap=plt.cm.viridis)
-    plt.colorbar(sm, ax=ax, ticks=np.linspace(3, 0.01, 20), label='k', aspect=25)
+    plt.colorbar(sm, ax=ax, ticks=np.linspace(3, 0.01, 20), label=r'$\rm k\; [Mpc^{-1}]$', aspect=25)
     plt.title(title)
     
     return fig
