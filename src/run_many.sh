@@ -6,7 +6,7 @@
 job_script="/leonardo_work/CNHPC_1497299/ntriantafyllou/database/database3_venv/CREATE_DATABASE/run_single.sh"
 
 # Number of jobs to submit
-num_jobs=20
+num_jobs=1
 
 # Initialize the first job ID to empty
 prev_job_id=""
@@ -19,7 +19,7 @@ for i in $(seq 1 $num_jobs); do
         echo "Submitted $job_script (Job $i) with Job ID: $job_id"
     else
         # Submit subsequent jobs with dependency on the previous job
-        job_id=$(sbatch --parsable --dependency=afterok:$prev_job_id "$job_script")
+        job_id=$(sbatch --parsable --dependency=afterany:$prev_job_id "$job_script")
         echo "Submitted $job_script (Job $i) with Job ID: $job_id (dependent on $prev_job_id)"
     fi
     # Update the previous job ID to the current one

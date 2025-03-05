@@ -44,7 +44,7 @@ def get_properties(redshift, random_seed, n_halos, hdf_group, cosmo_params, user
 
 
     zero_array = ffi.cast("float *", np.zeros(1).ctypes.data)
-    props_out = np.zeros(int(1e6)).astype('f4')
+    props_out = np.zeros(int(1e8)).astype('f4')
     lib.test_halo_props(
             float(z),
             user_params.cstruct,
@@ -89,6 +89,36 @@ def get_properties(redshift, random_seed, n_halos, hdf_group, cosmo_params, user
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Garbage------------------------------------------------------------------------------------------------------------------------------------
 
 def get_properties_from_cache(redshift, n_halos, cache_location, cosmo_params, user_params, flag_options, astro_params):
     z=redshift

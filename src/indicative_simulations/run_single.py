@@ -1,6 +1,5 @@
 TEST_WITH_SMALL_RUN = False # If set to 'True' 21cmFast will run a 60Mpc box with 60x60x60 resolution up until z=34 
 
-
 import json
 import argparse
 import time
@@ -26,9 +25,9 @@ from astropy import units as un
 '''========================================= Determine directories =================================='''
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--savedir", type = str, default = "/leonardo_scratch/large/userexternal/ntriant1/database/final/save/")
-parser.add_argument("--logdir", type = str, default = "/leonardo_scratch/large/userexternal/ntriant1/database/final/logs/")
-parser.add_argument("--cache_dir", type=str, default="/leonardo_scratch/large/userexternal/ntriant1/database/final/_cache/")
+parser.add_argument("--savedir", type = str, default = "/leonardo_scratch/large/userexternal/ntriant1/database/final/indicative_simulations/save/")
+parser.add_argument("--logdir", type = str, default = "/leonardo_scratch/large/userexternal/ntriant1/database/final/indicative_simulations/logs/")
+parser.add_argument("--cache_dir", type=str, default="/leonardo_scratch/large/userexternal/ntriant1/database/final/indicative_simulations/_cache/")
 parser.add_argument("--counter", type = int, default = 0)
 parser.add_argument("--threads", type=int, default=4)
 inputs = parser.parse_args()
@@ -38,11 +37,9 @@ inputs = parser.parse_args()
 counter = inputs.counter
 savedir = inputs.savedir
 threads = inputs.threads
-
-
 print(f'Running with counter: {counter}', flush=True)
 
-cache_path = f"/leonardo_scratch/large/userexternal/ntriant1/database/final/_cache/_cache_id_{counter}/"             
+cache_path = f"/leonardo_scratch/large/userexternal/ntriant1/database/final/indicative_simulations/_cache/_cache_id_{counter}/"             
 if not os.path.exists(cache_path):                                                              
     os.mkdir(cache_path)                                                                        
 p21c.config['direc'] = cache_path                                                               
@@ -60,8 +57,7 @@ cosmo_params = data["cosmo_params"]
 user_params = data["user_params"]
 flag_options = data["flag_options"]
 astro_params = data["astro_params"]
-global_params =  data["global_params"] # Add them from fiducial parameters but don't use them, they are just the defaults
-global_params={}
+global_params=  {}
 
 # Setup default values indicated as strings in the "FIDUCIAL_PARAMETERS.json" file
 Planck18 = Planck15.clone(
@@ -85,12 +81,14 @@ user_params['N_THREADS'] = threads
 
 
 # Change the values related to the database
-file_path = "./LHS_SAMPLES.json"
+# file_path = "./no_stoc_sfr_SAMPLES.json"
+file_path = "./PLUS_MINUS_PARAMS.json"
+
 with open(file_path, "r") as json_file:
     parameter_dict = json.load(json_file)
 parameter_dict_keys = list(parameter_dict.keys())
-varying_params = parameter_dict[parameter_dict_keys[counter-1]]
-
+# varying_params = parameter_dict[parameter_dict_keys[counter-1]]
+varying_params = parameter_dict[str(counter)]
 
 random_seed = varying_params['random_seed']
 cosmo_params['SIGMA_8'] = varying_params['SIGMA_8']
@@ -218,8 +216,6 @@ with h5py.File(filename, 'w') as hdf:
     # Simulation Params-----------------------------------------------------------------------
     group_simulation_parameters = hdf.create_group('simulation_parameters')
     
-
-    
     # Create subgroups and add attributes
     create_group_with_attributes(group_simulation_parameters, 'user_params', user_params)
     create_group_with_attributes(group_simulation_parameters, 'cosmo_params', cosmo_params)
@@ -227,6 +223,7 @@ with h5py.File(filename, 'w') as hdf:
     create_group_with_attributes(group_simulation_parameters, 'flag_options', flag_options)
     create_group_with_attributes(group_simulation_parameters, 'global_params', global_params)
     create_group_with_attributes(group_simulation_parameters, 'varying_params', varying_params)
+    
     
     
     # coeval_data---------------------------------------------------------------------------------

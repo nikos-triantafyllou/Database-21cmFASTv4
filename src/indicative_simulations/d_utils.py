@@ -112,7 +112,6 @@ def search_files(folder, pattern):
     return file_names
 
 
-
 def is_xHI_flagged(x_HI_coev):
     '''
     Function to see if the neutral gas fraction evolution from 21cmFAST is weird or not
